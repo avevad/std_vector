@@ -4,9 +4,7 @@
 #include <memory>
 
 namespace vector {
-
     namespace _detail {
-
         template<typename InputIterator>
         concept IsInputIterator = std::is_convertible_v<
             typename std::iterator_traits<InputIterator>::iterator_category,
@@ -14,10 +12,96 @@ namespace vector {
         >;
 
         template<typename T>
-        class VectorIter { };
+        class VectorIter {
+        public:
+            using value_type = T;
+            using difference_type = std::ptrdiff_t;
+            using pointer = value_type *;
+            using reference = value_type &;
+            using iterator_category = std::random_access_iterator_tag;
+            using iterator_concept = std::contiguous_iterator_tag;
+
+            VectorIter() = default;
+
+            explicit VectorIter(pointer ptr) : ptr(ptr) {
+            }
+
+            VectorIter(const VectorIter &) = default;
+
+            VectorIter(VectorIter &&) noexcept = default;
+
+            VectorIter &operator=(const VectorIter &) = default;
+
+            VectorIter &operator=(VectorIter &&) noexcept = default;
+
+            bool operator==(const VectorIter &) const = default;
+
+            auto operator<=>(const VectorIter &) const = default;
+
+            reference operator*() const {
+                return *ptr;
+            }
+
+            pointer operator->() const {
+                return ptr;
+            }
+
+            VectorIter &operator++() {
+                ++ptr;
+                return *this;
+            }
+
+            VectorIter &operator--() {
+                --ptr;
+                return *this;
+            }
+
+            VectorIter operator++(int) {
+                return {ptr++};
+            }
+
+            VectorIter operator--(int) {
+                return {ptr--};
+            }
+
+            VectorIter operator+(difference_type n) const {
+                return {ptr + n};
+            }
+
+            VectorIter operator-(difference_type n) const {
+                return {ptr - n};
+            }
+
+            VectorIter &operator+=(difference_type n) {
+                ptr += n;
+                return *this;
+            }
+
+            VectorIter &operator-=(difference_type n) {
+                ptr -= n;
+                return *this;
+            }
+
+            difference_type operator-(VectorIter other) const {
+                return ptr - other.ptr;
+            }
+
+            reference operator[](difference_type pos) const {
+                return ptr[pos];
+            }
+
+            pointer base() const {
+                return ptr;
+            }
+
+        private:
+            pointer ptr;
+        };
 
         template<typename T>
-        class VectorConstIter { };
+        VectorIter<T> operator+(typename VectorIter<T>::difference_type n, VectorIter<T> iter) {
+            return {n + iter.base()};
+        }
 
         template<typename T, typename Allocator = std::allocator<T> >
         class Vector {
@@ -33,95 +117,149 @@ namespace vector {
             using pointer = typename std::allocator_traits<Allocator>::pointer;
             using const_pointer = typename std::allocator_traits<Allocator>::const_pointer;
             using iterator = VectorIter<T>;
-            using const_iterator = VectorConstIter<T>;
+            using const_iterator = VectorIter<const T>;
             using reverse_iterator = std::reverse_iterator<iterator>;
             using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
             // Constructors
 
             Vector();
+
             explicit Vector(const allocator_type &alloc);
+
             explicit Vector(size_type count, const value_type &value, const allocator_type &alloc = allocator_type());
+
             explicit Vector(size_type count, const allocator_type &alloc = allocator_type());
+
             template<IsInputIterator InputIter>
             Vector(InputIter first, InputIter last, const allocator_type &alloc = allocator_type());
+
             Vector(const Vector &other);
+
             Vector(const Vector &other, const allocator_type &alloc);
+
             Vector(Vector &&other) noexcept;
+
             Vector(Vector &&other, const allocator_type &alloc);
+
             Vector(std::initializer_list<value_type> init, const allocator_type &alloc = allocator_type());
 
             // Assignment operators
 
             Vector &operator=(const Vector &other);
+
             Vector &operator=(Vector &&other) noexcept;
+
             Vector &operator=(std::initializer_list<value_type> init);
 
             // Other member functions
 
             void assign(size_type count, const value_type &value);
+
             template<IsInputIterator InputIter>
             void assign(InputIter first, InputIter last);
+
             void assign(std::initializer_list<value_type> init);
+
             allocator_type get_allocator() const;
 
             // Element access
 
             reference at(size_type pos);
+
             reference operator[](size_type pos);
+
             reference front();
+
             reference back();
+
             pointer data();
+
             const_reference at(size_type pos) const;
+
             const_reference operator[](size_type pos) const;
+
             const_reference front() const;
+
             const_reference back() const;
+
             const_pointer data() const;
 
             // Iterators
 
             iterator begin();
+
             const_iterator begin() const;
+
             const_iterator cbegin() const;
+
             iterator end();
+
             const_iterator end() const;
+
             const_iterator cend() const;
+
             reverse_iterator rbegin();
+
             const_reverse_iterator rbegin() const;
+
             const_reverse_iterator crbegin() const;
+
             reverse_iterator rend();
+
             const_reverse_iterator rend() const;
+
             const_reverse_iterator crend() const;
 
             // Size & capacity
 
             [[nodiscard]] bool empty() const;
+
             [[nodiscard]] size_type size() const;
+
             [[nodiscard]] size_type max_size() const;
+
             void reserve(size_type cap);
+
             [[nodiscard]] size_type capacity() const;
+
             void shrink_to_fit();
 
             // Modifiers
 
             void clear();
+
             iterator insert(const_iterator pos, const value_type &value);
+
             iterator insert(const_iterator pos, value_type &&value);
+
             iterator insert(const_iterator pos, size_t count, const value_type &value);
+
             template<IsInputIterator InputIter>
             iterator insert(const_iterator pos, InputIter first, InputIter last);
+
             iterator insert(const_iterator pos, std::initializer_list<value_type> init);
-            template<typename ...Args>
-            iterator emplace(const_iterator pos, Args && ...args);
+
+            template<typename... Args>
+            iterator emplace(const_iterator pos, Args &&... args);
+
             iterator erase(const_iterator pos);
+
             iterator erase(const_iterator first, const_iterator last);
+
             iterator push_back(const value_type &value);
+
             iterator push_back(value_type &&value);
-            template<typename ...Args>
-            iterator emplace_back(Args && ...args);
+
+            template<typename... Args>
+            iterator emplace_back(Args &&... args);
+
             void pop_back();
+
             void resize(size_type count);
+
             void resize(size_type count, const value_type &value);
+
             void swap(Vector &other) noexcept;
 
             // Destructor
@@ -130,6 +268,7 @@ namespace vector {
 
         private:
             pointer _data();
+
             const_pointer _data() const;
 
             void _create_storage(size_type cap);
@@ -142,12 +281,15 @@ namespace vector {
                 size_type cap;
 
                 explicit Storage(const allocator_type &alloc);
+
                 Storage(const allocator_type &alloc, size_type cap);
 
                 Storage(const Storage &) = delete;
+
                 Storage(Storage &&) noexcept;
 
                 Storage &operator=(const Storage &) = delete;
+
                 Storage &operator=(Storage &&) noexcept;
 
                 void swap(Storage &other) noexcept;
@@ -181,10 +323,12 @@ namespace vector {
         void _destroy_alloc(ForwardIter first, ForwardIter last, Allocator &alloc);
 
         template<typename T, typename Allocator>
-        Vector<T, Allocator>::Vector() : storage(allocator_type()), sz(0) { }
+        Vector<T, Allocator>::Vector() : storage(allocator_type()), sz(0) {
+        }
 
         template<typename T, typename Allocator>
-        Vector<T, Allocator>::Vector(const allocator_type &alloc) : storage(alloc), sz(0) { }
+        Vector<T, Allocator>::Vector(const allocator_type &alloc) : storage(alloc), sz(0) {
+        }
 
         template<typename T, typename Allocator>
         Vector<T, Allocator>::Vector(const size_type count, const value_type &value, const allocator_type &alloc)
@@ -217,11 +361,13 @@ namespace vector {
             : Vector(
                 other._data(), other._data() + other.sz,
                 std::allocator_traits<allocator_type>::select_on_container_copy_construction(other.storage.alloc)
-            ) { }
+            ) {
+        }
 
         template<typename T, typename Allocator>
         Vector<T, Allocator>::Vector(const Vector &other, const allocator_type &alloc)
-            : Vector(other._data(), other._data() + other.sz, alloc) { }
+            : Vector(other._data(), other._data() + other.sz, alloc) {
+        }
 
         template<typename T, typename Allocator>
         Vector<T, Allocator>::Vector(Vector &&other) noexcept
@@ -243,7 +389,8 @@ namespace vector {
 
         template<typename T, typename Allocator>
         Vector<T, Allocator>::Vector(std::initializer_list<value_type> init, const allocator_type &alloc)
-            : Vector(init.begin(), init.end(), alloc) { }
+            : Vector(init.begin(), init.end(), alloc) {
+        }
 
         template<typename T, typename Allocator>
         typename Vector<T, Allocator>::allocator_type Vector<T, Allocator>::get_allocator() const {
@@ -307,6 +454,66 @@ namespace vector {
         }
 
         template<typename T, typename Allocator>
+        typename Vector<T, Allocator>::iterator Vector<T, Allocator>::begin() {
+            return iterator{_data()};
+        }
+
+        template<typename T, typename Allocator>
+        typename Vector<T, Allocator>::const_iterator Vector<T, Allocator>::begin() const {
+            return const_iterator{_data()};
+        }
+
+        template<typename T, typename Allocator>
+        typename Vector<T, Allocator>::const_iterator Vector<T, Allocator>::cbegin() const {
+            return const_iterator{_data()};
+        }
+
+        template<typename T, typename Allocator>
+        typename Vector<T, Allocator>::iterator Vector<T, Allocator>::end() {
+            return iterator{_data() + sz};
+        }
+
+        template<typename T, typename Allocator>
+        typename Vector<T, Allocator>::const_iterator Vector<T, Allocator>::end() const {
+            return const_iterator{_data() + sz};
+        }
+
+        template<typename T, typename Allocator>
+        typename Vector<T, Allocator>::const_iterator Vector<T, Allocator>::cend() const {
+            return const_iterator{_data() + sz};
+        }
+
+        template<typename T, typename Allocator>
+        typename Vector<T, Allocator>::reverse_iterator Vector<T, Allocator>::rbegin() {
+            return std::reverse_iterator{iterator{_data() + sz}};
+        }
+
+        template<typename T, typename Allocator>
+        typename Vector<T, Allocator>::const_reverse_iterator Vector<T, Allocator>::rbegin() const {
+            return std::reverse_iterator{const_iterator{_data() + sz}};
+        }
+
+        template<typename T, typename Allocator>
+        typename Vector<T, Allocator>::const_reverse_iterator Vector<T, Allocator>::crbegin() const {
+            return std::reverse_iterator{const_iterator{_data() + sz}};
+        }
+
+        template<typename T, typename Allocator>
+        typename Vector<T, Allocator>::reverse_iterator Vector<T, Allocator>::rend() {
+            return std::reverse_iterator{iterator{_data()}};
+        }
+
+        template<typename T, typename Allocator>
+        typename Vector<T, Allocator>::const_reverse_iterator Vector<T, Allocator>::rend() const {
+            return std::reverse_iterator{const_iterator{_data()}};
+        }
+
+        template<typename T, typename Allocator>
+        typename Vector<T, Allocator>::const_reverse_iterator Vector<T, Allocator>::crend() const {
+            return std::reverse_iterator{const_iterator{_data()}};
+        }
+
+        template<typename T, typename Allocator>
         bool Vector<T, Allocator>::empty() const {
             return sz == 0;
         }
@@ -358,11 +565,13 @@ namespace vector {
         }
 
         template<typename T, typename Allocator>
-        Vector<T, Allocator>::Storage::Storage(const allocator_type &alloc): alloc(alloc), data(nullptr), cap(0) { }
+        Vector<T, Allocator>::Storage::Storage(const allocator_type &alloc): alloc(alloc), data(nullptr), cap(0) {
+        }
 
         template<typename T, typename Allocator>
         Vector<T, Allocator>::Storage::Storage(const allocator_type &alloc, size_type cap)
-            : alloc(alloc), data(std::allocator_traits<Allocator>::allocate(this->alloc, cap)), cap(cap) { }
+            : alloc(alloc), data(std::allocator_traits<Allocator>::allocate(this->alloc, cap)), cap(cap) {
+        }
 
         template<typename T, typename Allocator>
         Vector<T, Allocator>::Storage::Storage(Storage &&other) noexcept
@@ -459,9 +668,7 @@ namespace vector {
                 std::allocator_traits<Allocator>::destroy(alloc, std::addressof(*first));
             }
         }
-
     }
 
     using _detail::Vector;
-
 }
