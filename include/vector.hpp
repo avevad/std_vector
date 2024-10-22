@@ -456,7 +456,7 @@ namespace vector {
         template<typename ForwardIter, typename Allocator>
         void _destroy_alloc(ForwardIter first, ForwardIter last, Allocator &alloc) {
             for (; first != last; ++first) {
-                std::allocator_traits<Allocator>::destroy(alloc, std::__addressof(*first));
+                std::allocator_traits<Allocator>::destroy(alloc, std::addressof(*first));
             }
         }
 
