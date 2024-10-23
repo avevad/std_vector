@@ -5,7 +5,7 @@
 using namespace vector;
 
 TEST_CASE("Constructors work", "[constructors]") {
-    std::array arr{1, 2, 3, 4, 5};
+    std::array arr {1, 2, 3, 4, 5};
 
     Vector<int> v0;
     REQUIRE(v0.empty());
@@ -33,20 +33,34 @@ TEST_CASE("Constructors work", "[constructors]") {
     REQUIRE(v5[2] == v3[2]);
     REQUIRE(v4.empty());
 
-    Vector v6{5, 10, 15, 20, 25};
+    Vector v6 {5, 10, 15, 20, 25};
     REQUIRE(v6[2] == 15);
-
-    std::vector<int> a;
-    a.begin();
 }
 
 TEST_CASE("Iterators work", "[iterators]") {
-    Vector v{2, 4, 6, 8, 10};
+    Vector v {2, 4, 6, 8, 10};
     std::vector<int> v1;
-    for (int e: v) {
+    for (int e : v) {
         v1.push_back(e);
     }
     REQUIRE(v1 == std::vector{2, 4, 6, 8, 10});
     std::vector v2(v.crbegin(), v.crend());
     REQUIRE(v2 == std::vector{10, 8, 6, 4, 2});
+}
+
+
+TEST_CASE("Modifiers work", "[modifiers]") {
+    Vector v {1, 2, 4, 5};
+
+    v.insert(v.begin() + 2, 2);
+    REQUIRE(v == Vector {1, 2, 2, 4, 5});
+
+    v[2] = 3;
+    REQUIRE(v == Vector {1, 2, 3, 4, 5});
+
+    v.assign({0, 0, 7});
+    REQUIRE(v == Vector {0, 0, 7});
+
+    v.erase(v.begin(), v.begin() + 2);
+    REQUIRE(v == Vector {7});
 }
